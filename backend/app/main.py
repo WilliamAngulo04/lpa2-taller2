@@ -1,9 +1,43 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Path
+from pydantic import BaseModel
 from faker import Faker
 import hashlib
 import random
 
 app = FastAPI(title="API de Facturas Fake", version="1.0")
+
+TASA_IVA = 0.21
+
+
+class Empresa(BaseModel):
+    nombre: str
+    direccion: str
+    telefono: str
+    email: str
+
+
+class Cliente(BaseModel):
+    nombre: str
+    direccion: str
+    telefono: str
+
+
+class ItemDetalle(BaseModel):
+    descripcion: str
+    cantidad: int
+    precio_unitario: float
+    total: float
+
+
+class Factura(BaseModel):
+    numero_factura: str
+    fecha_emision: str
+    empresa: Empresa
+    cliente: Cliente
+    detalle: list[ItemDetalle]
+    subtotal: float
+    impuesto: float
+    total: float
 
 
 @app.get("/")
@@ -11,8 +45,16 @@ def health():
     return {"status": "ok", "servicio": "API de Facturas"}
 
 
-@app.get("/facturas/v1/{numero_factura}")
-def get_factura(numero_factura: str):
+@app.get("/facturas/v1/{numero_factura}", response_model=Factura)
+def get_factura(
+    numero_factura: str = Path(
+        min_length=1,
+        max_length=50,
+        pattern=r"^[A-Za-z0-9_-]+$",
+        description="Identificador de la factura (letras, números, guiones)",
+        examples=["FAC-2025-001"],
+    )
+):
     # Semilla derivada del número de factura: la misma factura siempre genera los mismos datos
     semilla = int(hashlib.sha256(numero_factura.encode("utf-8")).hexdigest(), 16) % (2**32)
     fake = Faker("es_ES")
@@ -47,7 +89,7 @@ def get_factura(numero_factura: str):
         })
 
     subtotal = round(sum(item["total"] for item in detalle), 2)
-    impuesto = round(subtotal * 0.21, 2)  # IVA 21%
+    impuesto = round(subtotal * TASA_IVA, 2)
     total = round(subtotal + impuesto, 2)
 
     factura = {
