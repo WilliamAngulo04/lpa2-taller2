@@ -14,7 +14,7 @@ import os
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')
 BACKEND_URL = os.getenv('BACKEND_API_URL', os.getenv('BACKEND_URL', 'http://backend:8000'))
-DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
+DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
 
 COLOR_PRIMARIO = colors.HexColor('#2E7D32')
 
@@ -155,6 +155,11 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/health')
+def health():
+    return {'status': 'ok', 'servicio': 'Frontend de Facturas'}
+
+
 @app.route('/generar-pdf', methods=['POST'])
 def generar_pdf():
     id_factura = request.form.get('id_factura', '').strip()
@@ -166,6 +171,8 @@ def generar_pdf():
     except requests.exceptions.RequestException:
         return error('Error de conexión con el servidor de facturas', 503)
 
+    if response.status_code == 422:
+        return error('Número de factura inválido: use solo letras, números, guiones (máx. 50)', 400)
     if response.status_code != 200:
         return error(f'Factura "{id_factura}" no encontrada', 404)
 

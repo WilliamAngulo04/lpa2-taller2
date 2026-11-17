@@ -12,7 +12,9 @@
         <form id="form-factura" method="POST" action="{{ url_for('generar_pdf') }}" target="_blank">
             <div class="form-group">
                 <label for="id_factura">ID de Factura:</label>
-                <input type="text" id="id_factura" name="id_factura" placeholder="Ej: FAC-2025-001" required>
+                <input type="text" id="id_factura" name="id_factura" placeholder="Ej: FAC-2025-001" required
+                       maxlength="50" pattern="[A-Za-z0-9_\-]+"
+                       title="Solo letras, números, guiones y guiones bajos">
             </div>
             <button type="submit" id="btn-generar">Generar Factura</button>
         </form>
