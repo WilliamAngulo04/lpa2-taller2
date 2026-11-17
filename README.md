@@ -31,11 +31,15 @@ factura-generator/
 ├── README.md                   # Este archivo
 ├── backend/                    # Servicio API
 │   ├── Dockerfile
+│   ├── requirements-dev.txt    # Dependencias para pruebas
+│   ├── tests/                  # Pruebas con pytest
 │   └── app/
 │       ├── main.py            # API FastAPI
 │       └── requirements.txt
 └── frontend/                   # Servicio Frontend
     ├── Dockerfile
+    ├── requirements-dev.txt    # Dependencias para pruebas
+    ├── tests/                  # Pruebas con pytest
     └── app/
         ├── main.py            # Servidor web Flask
         ├── requirements.txt
@@ -88,6 +92,10 @@ El backend expone un *endpoint* que genera facturas sintéticas:
 curl http://localhost:8000/facturas/v1/FAC-2025-001
 ```
 
+El número de factura debe tener entre 1 y 50 caracteres y contener solo letras, números, guiones (`-`) y guiones bajos (`_`). Si no cumple el formato, el API responde `422 Unprocessable Entity`.
+
+Los datos son **deterministas**: el número de factura se usa como semilla, por lo que la misma factura siempre devuelve los mismos datos.
+
 **Ejemplo de la Respuesta:**
 
 ```json
@@ -124,6 +132,8 @@ El frontend proporciona una interfaz web donde:
 ### Tecnologías del Frontend
 
 - **Flask**: Servidor web
+- **Gunicorn**: Servidor WSGI usado en el contenedor
+- **ReportLab**: Generación del PDF
 - **Jinja2**: Motor de plantillas
 - **HTML/CSS/JavaScript**: Interfaz de usuario
 
@@ -142,8 +152,9 @@ Puedes modificar el `docker-compose.yml` para añadir variables de entorno:
 
 ```yaml
 environment:
-  - API_URL=http://backend:8000
-  - DEBUG=true
+  - BACKEND_API_URL=http://backend:8000  # URL del API de facturas
+  - DEBUG=false                          # Modo depuración de Flask (solo desarrollo local)
+  - SECRET_KEY=cambiar-esto              # Clave para los mensajes flash
 ```
 
 ### Puertos Personalizados
@@ -208,11 +219,28 @@ curl http://localhost:8000/facturas/v1/TEST-001 | jq
 http http://localhost:8000/facturas/v1/TEST-001
 ```
 
-### Probar el Frontend
+### Pruebas automatizadas
+
+Cada servicio tiene pruebas con `pytest` (el frontend simula el backend, no necesita tenerlo levantado):
+
+```bash
+# Backend
+cd backend
+pip install -r requirements-dev.txt
+pytest
+
+# Frontend
+cd frontend
+pip install -r requirements-dev.txt
+pytest
+```
+
+### Probar el Frontend manualmente
 
 1. Navegar a `http://localhost:3000`
 2. Probar diferentes números de factura
 3. Verificar generación correcta de PDFs
+4. Comprobar el endpoint de salud: `curl http://localhost:3000/health`
 
 ## API Documentation
 
