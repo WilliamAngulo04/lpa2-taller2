@@ -4,7 +4,7 @@ Sistema completo de generación de facturas, utilizando [FastAPI](https://fastap
 
 ## Autor
 
-- Nombre del Estudiante - @WilliamAngulo04
+- William Angulo - @WilliamAngulo04
 
 ## Descripción del Proyecto
 
